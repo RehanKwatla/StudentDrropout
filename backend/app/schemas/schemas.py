@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 # Auth & User Schemas
 class LoginRequest(BaseModel):
@@ -31,8 +31,7 @@ class UserResponse(BaseModel):
     mfa_enabled: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Student Schemas
 class StudentBase(BaseModel):
@@ -65,8 +64,7 @@ class StudentResponse(StudentBase):
     updated_at: datetime
     latest_prediction: Optional[Dict[str, Any]] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Prediction Schemas
 class PredictRequest(BaseModel):
@@ -128,8 +126,7 @@ class InterventionResponse(BaseModel):
     updated_at: datetime
     student_name: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Faculty Notes Schemas
 class NoteCreate(BaseModel):
@@ -144,8 +141,7 @@ class NoteResponse(BaseModel):
     is_confidential: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # Audit & Import Schemas
 class AuditLogResponse(BaseModel):
@@ -159,8 +155,7 @@ class AuditLogResponse(BaseModel):
     resource_id: Optional[str]
     details: Optional[Dict[str, Any]]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ImportJobResponse(BaseModel):
     id: str
@@ -172,5 +167,4 @@ class ImportJobResponse(BaseModel):
     created_at: datetime
     error_log: Optional[List[Dict[str, Any]]] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

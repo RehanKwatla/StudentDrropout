@@ -88,7 +88,7 @@ def login(
     return {
         "mfa_required": False,
         "csrf_token": csrf_token,
-        "user": UserResponse.from_orm(user)
+        "user": UserResponse.model_validate(user)
     }
 
 @router.post("/mfa/verify")

@@ -18,15 +18,46 @@ from app.api.v1.model_info import router as model_info_router
 from app.api.v1.audit import router as audit_router
 from app.api.v1.health import router as health_router
 
+from contextlib import asynccontextmanager
+
 setup_logging()
 logger = logging.getLogger("app.main")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Ensure database schema is created and demo accounts are seeded on startup
+    try:
+        from app.database import engine, Base, SessionLocal
+        from app.models.entities import User
+        from app.seed_data import seed_database
+        
+        logger.info("Initializing database schema on startup...")
+        Base.metadata.create_all(bind=engine)
+        logger.info("Database schema verified.")
+        
+        db = SessionLocal()
+        try:
+            user_count = db.query(User).count()
+            if user_count == 0:
+                logger.info("No existing users found in database. Seeding demo accounts and students...")
+                seed_database()
+                logger.info("Startup demo data seed completed successfully.")
+            else:
+                logger.info("Database contains %d users. Seeding skipped.", user_count)
+        finally:
+            db.close()
+    except Exception as e:
+        logger.error("Startup database initialization error: %s", e)
+    
+    yield
 
 app = FastAPI(
     title="Student Success Early-Warning System API",
     description="Explainable AI (XAI) for Student Dropout Prediction and Proactive Retention Support",
     version="1.0.0",
     docs_url="/docs" if settings.ENVIRONMENT != "production" else None,
-    redoc_url="/redoc" if settings.ENVIRONMENT != "production" else None
+    redoc_url="/redoc" if settings.ENVIRONMENT != "production" else None,
+    lifespan=lifespan
 )
 
 # 1. Strict CORS Middleware (Security Requirement 11)
