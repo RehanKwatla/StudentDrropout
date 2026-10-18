@@ -23,6 +23,18 @@ from contextlib import asynccontextmanager
 setup_logging()
 logger = logging.getLogger("app.main")
 
+# Register all models on Base.metadata and create tables on import
+try:
+    from app.database import engine, Base, SessionLocal
+    from app.models.entities import (
+        User, Student, StudentAcademicRecord, Prediction,
+        Intervention, FacultyNote, ModelVersion, AuditLog,
+        RevokedToken, ImportJob
+    )
+    Base.metadata.create_all(bind=engine)
+except Exception as _init_err:
+    logger.warning("Pre-import table creation: %s", _init_err)
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Ensure database schema is created and demo accounts are seeded on startup
