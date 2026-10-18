@@ -87,6 +87,7 @@ def login(
 
     return {
         "mfa_required": False,
+        "token": token,
         "csrf_token": csrf_token,
         "user": UserResponse.model_validate(user)
     }
@@ -148,8 +149,9 @@ def verify_mfa(
     )
 
     return {
+        "token": token,
         "csrf_token": csrf_token,
-        "user": UserResponse.from_orm(user)
+        "user": UserResponse.model_validate(user)
     }
 
 @router.post("/mfa/setup", response_model=MFASetupResponse)

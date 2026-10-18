@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
-import { api, ApiError } from '../api/client';
+import { api, ApiError, setAuthToken, setCsrfToken } from '../api/client';
 
 interface AuthContextType {
   user: User | null;
@@ -35,13 +35,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string) => {
-    const res = await api.post<{ mfa_required: boolean; pending_token?: string; user?: User }>(
-      '/auth/login',
-      { email, password }
-    );
+    const res = await api.post<{
+      mfa_required: boolean;
+      pending_token?: string;
+      token?: string;
+      csrf_token?: string;
+      user?: User;
+    }>('/auth/login', { email, password });
 
     if (res.mfa_required && res.pending_token) {
       return { mfaRequired: true, pendingToken: res.pending_token };
+    }
+
+    if (res.token) {
+      setAuthToken(res.token);
+    }
+    if (res.csrf_token) {
+      setCsrfToken(res.csrf_token);
     }
 
     if (res.user) {
@@ -51,11 +61,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const verifyMfa = async (pendingToken: string, code: string, isRecoveryCode: boolean = false) => {
-    const res = await api.post<{ user: User }>('/auth/mfa/verify', {
+    const res = await api.post<{
+      token?: string;
+      csrf_token?: string;
+      user: User;
+    }>('/auth/mfa/verify', {
       pending_token: pendingToken,
       code,
       is_recovery_code: isRecoveryCode,
     });
+
+    if (res.token) {
+      setAuthToken(res.token);
+    }
+    if (res.csrf_token) {
+      setCsrfToken(res.csrf_token);
+    }
+
     setUser(res.user);
   };
 
@@ -65,6 +87,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (e) {
       console.error('Logout error:', e);
     } finally {
+      setAuthToken(null);
+      setCsrfToken(null);
       setUser(null);
     }
   };

@@ -1,3 +1,28 @@
+let inMemoryAuthToken: string | null = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('auth_token') : null;
+let inMemoryCsrfToken: string | null = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('csrf_token') : null;
+
+export function setAuthToken(token: string | null) {
+  inMemoryAuthToken = token;
+  if (typeof sessionStorage !== 'undefined') {
+    if (token) {
+      sessionStorage.setItem('auth_token', token);
+    } else {
+      sessionStorage.removeItem('auth_token');
+    }
+  }
+}
+
+export function setCsrfToken(token: string | null) {
+  inMemoryCsrfToken = token;
+  if (typeof sessionStorage !== 'undefined') {
+    if (token) {
+      sessionStorage.setItem('csrf_token', token);
+    } else {
+      sessionStorage.removeItem('csrf_token');
+    }
+  }
+}
+
 function getCsrfTokenFromCookie(): string | null {
   const match = document.cookie.match(new RegExp('(^|;\\s*)student_success_csrf=([^;]*)'));
   return match ? decodeURIComponent(match[2]) : null;
@@ -27,10 +52,15 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers.set('Content-Type', 'application/json');
   }
 
+  // Include Bearer authorization token if present
+  if (inMemoryAuthToken && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${inMemoryAuthToken}`);
+  }
+
   // Include CSRF token on state-changing requests (Security Requirement 3)
   const method = (options.method || 'GET').toUpperCase();
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
-    const csrfToken = getCsrfTokenFromCookie();
+    const csrfToken = inMemoryCsrfToken || getCsrfTokenFromCookie();
     if (csrfToken) {
       headers.set('X-CSRF-Token', csrfToken);
     }
