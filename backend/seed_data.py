@@ -321,6 +321,8 @@ def seed_demo_data(reset: bool = False):
     finally:
         db.close()
 
+seed_database = seed_demo_data
+
 if __name__ == "__main__":
     reset_flag = "--reset" in sys.argv
     seed_demo_data(reset=reset_flag)

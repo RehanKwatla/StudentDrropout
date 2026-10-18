@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
     try:
         from app.database import engine, Base, SessionLocal
         from app.models.entities import User
-        from app.seed_data import seed_database
+        from app.seed_data import seed_demo_data
         
         logger.info("Initializing database schema on startup...")
         Base.metadata.create_all(bind=engine)
@@ -40,7 +40,7 @@ async def lifespan(app: FastAPI):
             user_count = db.query(User).count()
             if user_count == 0:
                 logger.info("No existing users found in database. Seeding demo accounts and students...")
-                seed_database()
+                seed_demo_data()
                 logger.info("Startup demo data seed completed successfully.")
             else:
                 logger.info("Database contains %d users. Seeding skipped.", user_count)
@@ -126,9 +126,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
     logger.error("Unhandled server exception on %s %s: %s", request.method, request.url.path, str(exc), exc_info=True)
+    origin = request.headers.get("origin")
+    headers = {}
+    if origin:
+        headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
+        headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-CSRF-Token, Accept"
+        headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": "An internal server error occurred. Please contact the administrator."}
+        content={"detail": f"An internal server error occurred: {str(exc)}"},
+        headers=headers
     )
 
 api_v1_router = APIRouter(prefix="/api/v1")
