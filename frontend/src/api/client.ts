@@ -15,8 +15,10 @@ export class ApiError extends Error {
   }
 }
 
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = endpoint.startsWith('http') ? endpoint : `/api/v1${endpoint}`;
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}/api/v1${endpoint}`;
   
   const headers = new Headers(options.headers || {});
   
