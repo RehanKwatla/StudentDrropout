@@ -8,10 +8,16 @@ logger = logging.getLogger("app.database")
 
 Base = declarative_base()
 
-# Primary database engine (PostgreSQL with psycopg3 binary driver)
+# Primary database engine (PostgreSQL with psycopg binary driver)
+db_url = settings.DATABASE_URL
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+psycopg://", 1)
+elif db_url.startswith("postgresql://") and not any(db_url.startswith(f"postgresql+{driver}:") for driver in ["psycopg", "psycopg2", "asyncpg"]):
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+
 try:
     engine = create_engine(
-        settings.DATABASE_URL,
+        db_url,
         pool_pre_ping=True,
         pool_size=10,
         max_overflow=20,
@@ -20,7 +26,7 @@ try:
     # Test connection
     with engine.connect() as conn:
         conn.execute(text("SELECT 1"))
-    logger.info("Successfully connected to primary PostgreSQL database at %s", settings.DATABASE_URL)
+    logger.info("Successfully connected to primary PostgreSQL database at %s", db_url)
     is_sqlite = False
 except Exception as e:
     logger.warning("Could not connect to PostgreSQL (%s). Falling back to SQLite development database: %s", e, settings.SQLITE_FALLBACK_URL)
