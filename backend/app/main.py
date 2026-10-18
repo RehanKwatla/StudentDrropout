@@ -1,5 +1,5 @@
 import logging
-from fastapi import FastAPI, Request, Response, status
+from fastapi import FastAPI, Request, Response, status, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -131,21 +131,20 @@ async def generic_exception_handler(request: Request, exc: Exception):
         content={"detail": "An internal server error occurred. Please contact the administrator."}
     )
 
-# 4. Mount API Routes under /api/v1
-api_v1 = FastAPI()
-api_v1.include_router(health_router)
-api_v1.include_router(auth_router)
-api_v1.include_router(students_router)
-api_v1.include_router(predictions_router)
-api_v1.include_router(explainability_router)
-api_v1.include_router(analytics_router)
-api_v1.include_router(interventions_router)
-api_v1.include_router(notes_router)
-api_v1.include_router(imports_router)
-api_v1.include_router(model_info_router)
-api_v1.include_router(audit_router)
+api_v1_router = APIRouter(prefix="/api/v1")
+api_v1_router.include_router(health_router)
+api_v1_router.include_router(auth_router)
+api_v1_router.include_router(students_router)
+api_v1_router.include_router(predictions_router)
+api_v1_router.include_router(explainability_router)
+api_v1_router.include_router(analytics_router)
+api_v1_router.include_router(interventions_router)
+api_v1_router.include_router(notes_router)
+api_v1_router.include_router(imports_router)
+api_v1_router.include_router(model_info_router)
+api_v1_router.include_router(audit_router)
 
-app.mount("/api/v1", api_v1)
+app.include_router(api_v1_router)
 
 if __name__ == "__main__":
     import uvicorn

@@ -27,6 +27,17 @@ class ModelExplainerService:
         """Load the serialized model artifact from disk."""
         artifact_path = os.path.join(settings.MODEL_ARTIFACTS_DIR, "student_dropout_rf_model.joblib")
         if not os.path.exists(artifact_path):
+            candidates = [
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), "artifacts", "student_dropout_rf_model.joblib"),
+                os.path.join(os.getcwd(), "backend", "app", "ml", "artifacts", "student_dropout_rf_model.joblib"),
+                os.path.join(os.getcwd(), "app", "ml", "artifacts", "student_dropout_rf_model.joblib"),
+            ]
+            for cand in candidates:
+                if os.path.exists(cand):
+                    artifact_path = cand
+                    break
+
+        if not os.path.exists(artifact_path):
             logger.warning("Model artifact not found at %s. Train model first.", artifact_path)
             return False
 
